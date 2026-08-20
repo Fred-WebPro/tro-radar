@@ -66,7 +66,41 @@ export default async function CheckPage({
       <SearchBox key={query} initial={query} />
 
       {query === "" ? (
-        <p className="text-ink-muted">Enter a brand or product name to check.</p>
+        <div className="max-w-2xl space-y-6">
+          <div className="space-y-2">
+            <h1 className="font-display text-2xl font-medium tracking-tight">
+              Check a product before you list it
+            </h1>
+            <p className="leading-relaxed text-ink-2">
+              Type the <strong className="text-ink">brand on the product</strong> (or paste the
+              whole listing title) — we match it against every Schedule A lawsuit filed since
+              2018.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-muted">
+              Try an example
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {["Harley-Davidson", "Sony PlayStation controller", "Paddington plush", "generic silicone spatula"].map((s) => (
+                <Link
+                  key={s}
+                  href={`/check?q=${encodeURIComponent(s)}`}
+                  className="border border-rule-strong bg-surface px-3 py-1.5 text-sm font-medium transition-colors hover:border-ink"
+                >
+                  {s}
+                </Link>
+              ))}
+            </div>
+          </div>
+          <p className="text-sm text-ink-muted">
+            First time here? Read the{" "}
+            <Link href="/guide" className="text-link hover:underline">
+              3-minute guide
+            </Link>{" "}
+            — what these lawsuits are and how to read the verdict.
+          </p>
+        </div>
       ) : (
         <>
           <section className={`border-2 ${style.border} ${style.bg} p-7`} aria-live="polite">
@@ -85,6 +119,11 @@ export default async function CheckPage({
                 Most recent matching filing: {risk.lastFiled}
               </p>
             )}
+            <p className="mt-3 text-xs">
+              <Link href="/guide#verdicts" className="text-link hover:underline">
+                How to read this verdict →
+              </Link>
+            </p>
           </section>
 
           {groups.length > 0 && (

@@ -119,7 +119,12 @@ export default async function Home() {
 
       <Reveal>
         <section className="space-y-5">
-          <SectionHeading>How it works</SectionHeading>
+          <div className="flex items-baseline justify-between">
+            <SectionHeading>How it works</SectionHeading>
+            <Link href="/guide" className="text-sm text-link hover:underline">
+              Full guide →
+            </Link>
+          </div>
         <ol className="grid gap-x-8 gap-y-6 sm:grid-cols-3">
           {[
             {

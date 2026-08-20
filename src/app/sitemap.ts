@@ -8,6 +8,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const brands = await topPlaintiffs(200);
   return [
     { url: SITE_URL, changeFrequency: "daily", priority: 1 },
+    { url: `${SITE_URL}/guide`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${SITE_URL}/recent`, changeFrequency: "daily", priority: 0.8 },
     { url: `${SITE_URL}/plaintiffs`, changeFrequency: "daily", priority: 0.8 },
     ...brands.map((b) => ({

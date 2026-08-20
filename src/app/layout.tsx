@@ -57,8 +57,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <span className="font-display text-xl font-semibold tracking-tight">TRO Radar</span>
             </Link>
             <nav className="flex items-center gap-6 text-[11px] font-medium uppercase tracking-[0.14em] text-ink-2">
-              <Link href="/recent" className="hover:text-ink">Recent filings</Link>
-              <Link href="/plaintiffs" className="hover:text-ink">Serial plaintiffs</Link>
+              <Link href="/guide" className="hover:text-ink">How to use</Link>
+              <Link href="/recent" className="hidden hover:text-ink sm:block">Recent filings</Link>
+              <Link href="/plaintiffs" className="hidden hover:text-ink sm:block">Serial plaintiffs</Link>
             </nav>
           </div>
         </header>
