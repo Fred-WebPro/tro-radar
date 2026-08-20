@@ -31,7 +31,7 @@ const TEXT = {
   },
 } as const;
 
-function emailBody(hits: PortfolioHit[], lang: Lang): string {
+function emailBody(hits: PortfolioHit[], lang: Lang, token: string): string {
   const t = TEXT[lang];
   const blocks = hits
     .map((h) => {
@@ -42,7 +42,7 @@ function emailBody(hits: PortfolioHit[], lang: Lang): string {
       return `${t.product}: ${h.item.title}\n${t.newCases}: ${h.freshCases.length}\n${cases}`;
     })
     .join("\n\n");
-  return `${t.intro}\n\n${blocks}\n\n${t.action}\n\n${t.manage} ${SITE_URL}${lang === "ru" ? "/ru" : ""}/portfolio\n`;
+  return `${t.intro}\n\n${blocks}\n\n${t.action}\n\n${t.manage} ${SITE_URL}${lang === "ru" ? "/ru" : ""}/portfolio?token=${token}\n`;
 }
 
 function telegramBody(hits: PortfolioHit[], lang: Lang): string {
@@ -110,7 +110,9 @@ export async function runMonitor(opts: { instantOnly?: boolean } = {}): Promise<
     const t = TEXT[acc.lang];
     let delivered = false;
     if (acc.email) {
-      delivered = (await sendEmail(acc.email, t.subject(hits.length), emailBody(hits, acc.lang))) || delivered;
+      delivered =
+        (await sendEmail(acc.email, t.subject(hits.length), emailBody(hits, acc.lang, acc.token))) ||
+        delivered;
     }
     if (acc.telegram_chat_id) {
       delivered = (await sendTelegram(acc.telegram_chat_id, telegramBody(hits, acc.lang))) || delivered;

@@ -54,10 +54,16 @@ you want them. `SITE_URL` is derived automatically on Vercel.
 | `/case/[docketId]` | Case detail with parties and a link to the full CourtListener docket |
 | `/recent` | Latest 100 filings |
 | `/plaintiffs` | Serial-filer leaderboard (top 100) |
-| `/api/check?q=` | JSON verdict — the endpoint a future Chrome extension calls |
+| `/portfolio?token=` | Web view of a monitored portfolio (linked from alert emails) |
+| `/api/check?q=` | JSON verdict + risk score and enforcement intelligence |
+| `/api/check-bulk` | POST `{titles:[]}` — verdicts for a whole result page |
+| `/api/account` | Token bootstrap and settings (email, language) |
+| `/api/portfolio` | GET/POST/DELETE monitored products |
+| `/api/telegram/webhook` | Telegram bot: `/start <code>` links a chat to an account |
 | `/api/subscribe` | POST `{email, query}` — watchlist signup |
 | `/api/unsubscribe?token=` | One-click unsubscribe (linked from digest emails) |
 | `/api/cron/ingest` | Chunked, cursor-resumable data sync (Vercel Cron daily + manual seeding) |
+| `/api/cron/monitor` | Re-checks every portfolio and fires alerts |
 | `/api/cron/digest` | Watchlist digest sender (Vercel Cron daily) |
 | `/sitemap.xml`, `/robots.txt` | SEO: brand check pages are indexable landing pages |
 
@@ -66,13 +72,48 @@ watchers).
 
 ## Chrome extension
 
-`extension/` is a Manifest V3 extension that shows the traffic-light verdict directly on
-**AliExpress, Temu, 1688, and Alibaba** product pages (badge in the bottom-right corner,
-powered by `/api/check`), plus a popup for manual checks.
+`extension/` is a Manifest V3 extension covering **AliExpress, Temu, 1688, Alibaba,
+Amazon, eBay and Etsy**:
+
+- **Search-result scanning** — every product card gets a traffic-light badge
+  (`⚠ 31` = active cases behind that brand), so a whole page is triaged at a glance.
+  One `/api/check-bulk` round trip per page, cached for 6 hours.
+- **Product page verdict** — a card with the risk score, filing cadence, matched brands
+  and any enforcement-mill law firm.
+- **Watch this product** — pins it to the portfolio for daily monitoring.
+- **Toolbar badge** — how many pinned products are currently under fire.
+- **Settings page** — email and Telegram alerts, portfolio management.
+- **Onboarding** — a 30-second tour on install.
 
 Install (unpacked): `chrome://extensions` → enable **Developer mode** → **Load unpacked**
 → select the `extension/` folder. Publishing to the Chrome Web Store requires a one-time
 $5 developer registration.
+
+## Accounts, portfolio and plans
+
+Accounts are token-first: the server issues an opaque token on first contact and the
+extension stores it — no password, no signup wall. Email and Telegram are optional and
+only needed to receive alerts.
+
+| | Free | Pro |
+|---|---|---|
+| Verdicts, risk score, product-page card | ✅ | ✅ |
+| Search-result scanning | 100 cards/day | unlimited |
+| Portfolio | 3 products | 500 |
+| Alerts | daily digest | instant (email + Telegram) |
+
+A red verdict is never paywalled — the warning is the trust-builder; the paid tier sells
+scale and automation.
+
+## Matching accuracy
+
+Full-text retrieval matches any shared word, which is far too loose for verdicts
+("Universal Silicone Spatula" would hit *Universal City Studios*). Retrieval is therefore
+followed by a precision filter (`src/lib/match.ts`): a brand only matches when the query
+contains a word that actually *identifies* that plaintiff. Descriptive vocabulary
+("universal", "steel", "outdoor") and corporate boilerplate ("studios", "enterprises",
+"motor") identify nobody, so `sony` matches *Sony Interactive Entertainment* and `bosch`
+matches *Robert Bosch*, while `universal` matches nothing on its own.
 
 ## How the verdict works
 
