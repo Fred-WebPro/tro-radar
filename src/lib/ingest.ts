@@ -4,15 +4,39 @@
 // call picks up where it left off.
 
 import { buildSearchUrl, fetchPage, sleep, PAGE_DELAY_MS } from "./courtlistener";
+import { getDb } from "./db";
 import { upsertCases, countCases, getSyncState, setSyncState } from "./repo";
 
 export interface IngestResult {
   done: boolean;
+  locked?: boolean;
   pages: number;
   processed: number;
   newCases: number;
   totalReported: number | null;
   newestFiled: string | null;
+}
+
+// Concurrent crawls fight over the shared cursor and burn the CourtListener
+// rate budget, so only one runs at a time. The lock is an atomic conditional
+// UPDATE on sync_state; a stale lock (crashed run) expires after 6 minutes,
+// comfortably past the 5-minute serverless execution cap.
+const LOCK_TTL_MS = 6 * 60_000;
+
+async function acquireLock(): Promise<boolean> {
+  const db = await getDb();
+  await db.execute(
+    "INSERT INTO sync_state (key, value) VALUES ('ingest_lock', '') ON CONFLICT(key) DO NOTHING"
+  );
+  const rs = await db.execute({
+    sql: "UPDATE sync_state SET value = ? WHERE key = 'ingest_lock' AND (value = '' OR value < ?)",
+    args: [new Date().toISOString(), new Date(Date.now() - LOCK_TTL_MS).toISOString()],
+  });
+  return rs.rowsAffected > 0;
+}
+
+async function releaseLock(): Promise<void> {
+  await setSyncState("ingest_lock", "");
 }
 
 function daysAgo(n: number): string {
@@ -24,6 +48,17 @@ function daysAgo(n: number): string {
  * delay). Returns done=false when a cursor remains — call again to continue.
  */
 export async function runIngest(opts: { maxPages?: number; since?: string } = {}): Promise<IngestResult> {
+  if (!(await acquireLock())) {
+    return { done: false, locked: true, pages: 0, processed: 0, newCases: 0, totalReported: null, newestFiled: null };
+  }
+  try {
+    return await crawl(opts);
+  } finally {
+    await releaseLock();
+  }
+}
+
+async function crawl(opts: { maxPages?: number; since?: string }): Promise<IngestResult> {
   const maxPages = opts.maxPages ?? 10;
   const before = await countCases();
 

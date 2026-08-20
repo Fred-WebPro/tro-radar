@@ -23,6 +23,11 @@ async function main() {
   let totalNew = 0;
   for (;;) {
     const chunk = await runIngest({ maxPages: Math.min(10, cap - totalPages), since });
+    if (chunk.locked) {
+      console.log("Another ingest is running; retrying in 60s…");
+      await new Promise((r) => setTimeout(r, 60_000));
+      continue;
+    }
     totalPages += chunk.pages;
     totalNew += chunk.newCases;
     if (chunk.totalReported !== null && totalPages <= chunk.pages) {
