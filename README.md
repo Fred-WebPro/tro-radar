@@ -27,24 +27,23 @@ backfill, `-- --max-pages 20` for a bounded run.
 
 ## Free production deploy (the whole stack costs $0)
 
-1. **Push the repo to GitHub** (public repo = unlimited free Actions minutes).
-2. **Turso** (free tier): create a database, then
-   `turso db show --url` and `turso db tokens create` give you
-   `TURSO_DATABASE_URL` (libsql://…) and `TURSO_AUTH_TOKEN`.
-3. **Seed it once from your machine** — put both values in `.env.local`, then
-   `npm run ingest -- --since 2025-08-20` (or deeper).
-4. **Vercel** (free Hobby): import the repo, add env vars
-   `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `SITE_URL=https://<app>.vercel.app`.
-5. **GitHub Actions** (already in `.github/workflows/`):
-   - `sync-data.yml` re-ingests every 6 hours;
-   - `send-digest.yml` emails watchlist digests daily.
-   Add repository **secrets**: `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, and optionally
-   `CL_API_TOKEN`, `RESEND_API_KEY`, `DIGEST_FROM`; and a repository **variable** `SITE_URL`.
-6. **Resend** (free: 100 emails/day): API key enables real digest emails. Note: without
-   a verified custom domain (~$10/yr, the only non-free item, optional), Resend only
-   delivers to your own address — fine for testing.
-7. **CourtListener token** (free registration) removes anonymous rate limits for the
-   6-hourly sync.
+1. **GitHub**: push the repo.
+2. **Vercel** (free Hobby): import the repo. In **Storage → Connect Database**, create a
+   **Turso** database (Marketplace, Starter $0) and connect it to the project — the
+   `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` env vars are injected automatically.
+3. **Seed the database**: hit `https://<app>.vercel.app/api/cron/ingest?pages=15`
+   repeatedly until the response says `"done": true` (each call advances a stored
+   cursor; a 365-day backfill is ~12 calls). `vercel.json` then keeps it fresh with
+   a daily **Vercel Cron** — no extra accounts needed.
+4. **Resend** (free: 100 emails/day): add `RESEND_API_KEY` (+ optional `DIGEST_FROM`)
+   to enable real digest emails. Without a verified custom domain (~$10/yr, the only
+   non-free item, optional), Resend only delivers to your own address — fine for testing.
+5. **CourtListener token** (free registration): add `CL_API_TOKEN` to remove anonymous
+   API rate limits. Optional: `CRON_SECRET` locks the two `/api/cron/*` endpoints.
+
+The GitHub Actions in `.github/workflows/` are an optional alternative scheduler
+(6-hourly instead of daily); enable their `schedule` blocks and add repo secrets if
+you want them. `SITE_URL` is derived automatically on Vercel.
 
 ## What's inside
 
@@ -58,6 +57,8 @@ backfill, `-- --max-pages 20` for a bounded run.
 | `/api/check?q=` | JSON verdict — the endpoint a future Chrome extension calls |
 | `/api/subscribe` | POST `{email, query}` — watchlist signup |
 | `/api/unsubscribe?token=` | One-click unsubscribe (linked from digest emails) |
+| `/api/cron/ingest` | Chunked, cursor-resumable data sync (Vercel Cron daily + manual seeding) |
+| `/api/cron/digest` | Watchlist digest sender (Vercel Cron daily) |
 | `/sitemap.xml`, `/robots.txt` | SEO: brand check pages are indexable landing pages |
 
 Scripts: `npm run ingest` (pull/refresh cases), `npm run digest` (email new filings to

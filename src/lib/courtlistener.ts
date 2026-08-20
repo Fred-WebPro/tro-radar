@@ -3,7 +3,7 @@
 // (free token: https://www.courtlistener.com/help/api/rest/).
 
 const BASE = "https://www.courtlistener.com/api/rest/v4/search/";
-const PAGE_DELAY_MS = 1200;
+export const PAGE_DELAY_MS = 1200;
 const BACKOFF_MS = [5_000, 20_000, 60_000];
 
 export interface CLCase {
@@ -19,11 +19,27 @@ export interface CLCase {
   party: string[];
 }
 
-function sleep(ms: number) {
+export interface CLPage {
+  results: CLCase[];
+  next: string | null;
+  count: number;
+}
+
+export function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function fetchPage(url: string): Promise<{ results: CLCase[]; next: string | null; count: number }> {
+export function buildSearchUrl(since?: string): string {
+  const params = new URLSearchParams({
+    type: "r",
+    q: `caseName:"Schedule A"`,
+    order_by: "dateFiled desc",
+  });
+  if (since) params.set("filed_after", since);
+  return `${BASE}?${params}`;
+}
+
+export async function fetchPage(url: string): Promise<CLPage> {
   const headers: Record<string, string> = { Accept: "application/json" };
   const token = process.env.CL_API_TOKEN;
   if (token) headers.Authorization = `Token ${token}`;
@@ -41,32 +57,5 @@ async function fetchPage(url: string): Promise<{ results: CLCase[]; next: string
       continue;
     }
     throw new Error(`CourtListener request failed: ${res.status} ${res.statusText} (${url})`);
-  }
-}
-
-/**
- * Yield pages of Schedule A dockets, newest-filed first.
- * `since` bounds date_filed; omit for a full crawl.
- */
-export async function* searchScheduleA(opts: {
-  since?: string;
-  maxPages?: number;
-}): AsyncGenerator<{ results: CLCase[]; count: number; page: number }> {
-  const params = new URLSearchParams({
-    type: "r",
-    q: `caseName:"Schedule A"`,
-    order_by: "dateFiled desc",
-  });
-  if (opts.since) params.set("filed_after", opts.since);
-
-  let url: string | null = `${BASE}?${params}`;
-  let page = 0;
-  while (url) {
-    const { results, next, count } = await fetchPage(url);
-    page++;
-    yield { results, count, page };
-    if (opts.maxPages && page >= opts.maxPages) return;
-    url = next;
-    if (url) await sleep(PAGE_DELAY_MS);
   }
 }

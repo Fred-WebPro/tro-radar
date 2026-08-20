@@ -1,9 +1,8 @@
 import type { MetadataRoute } from "next";
 import { topPlaintiffs } from "@/lib/repo";
+import { SITE_URL } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
-
-const SITE_URL = process.env.SITE_URL ?? "http://localhost:3000";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const brands = await topPlaintiffs(200);

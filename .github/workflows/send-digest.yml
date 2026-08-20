@@ -1,9 +1,10 @@
 name: Send watchlist digest
 
+# Optional alternative to the built-in Vercel Cron. Enable the schedule
+# after adding the repository secrets.
 on:
-  schedule:
-    # Daily at 13:10 UTC (morning in the US).
-    - cron: "10 13 * * *"
+  # schedule:
+  #   - cron: "10 13 * * *"
   workflow_dispatch: {}
 
 jobs:

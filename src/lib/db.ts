@@ -68,13 +68,17 @@ let client: Client | null = null;
 let ready: Promise<Client> | null = null;
 
 async function init(): Promise<Client> {
-  const url = process.env.TURSO_DATABASE_URL ?? "file:data/troradar.db";
+  const url =
+    process.env.TURSO_DATABASE_URL ?? process.env.TURSO_URL ?? "file:data/troradar.db";
   const isFile = url.startsWith("file:");
   if (isFile) {
     const p = url.slice("file:".length);
     fs.mkdirSync(path.dirname(path.resolve(process.cwd(), p)), { recursive: true });
   }
-  const c = createClient({ url, authToken: process.env.TURSO_AUTH_TOKEN });
+  const c = createClient({
+    url,
+    authToken: process.env.TURSO_AUTH_TOKEN ?? process.env.TURSO_TOKEN,
+  });
   if (isFile) {
     await c.execute("PRAGMA journal_mode = WAL");
     await c.execute("PRAGMA busy_timeout = 5000");

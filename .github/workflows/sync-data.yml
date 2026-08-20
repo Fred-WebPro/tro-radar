@@ -1,9 +1,11 @@
 name: Sync court data
 
+# Optional alternative to the built-in Vercel Cron (which runs daily).
+# Enable the schedule below for 6-hourly freshness after adding the
+# TURSO_DATABASE_URL / TURSO_AUTH_TOKEN repository secrets.
 on:
-  schedule:
-    # Every 6 hours; CourtListener updates continuously.
-    - cron: "17 */6 * * *"
+  # schedule:
+  #   - cron: "17 */6 * * *"
   workflow_dispatch: {}
 
 jobs:
