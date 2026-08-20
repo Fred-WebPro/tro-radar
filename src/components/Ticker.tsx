@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CaseRow } from "@/lib/repo";
+import { p, ui, type Lang } from "@/lib/i18n";
 
 function shortCourt(court: string): string {
   return court
@@ -8,10 +9,10 @@ function shortCourt(court: string): string {
     .replace("Southern District of ", "S.D. ");
 }
 
-function Item({ c }: { c: CaseRow }) {
+function Item({ lang, c }: { lang: Lang; c: CaseRow }) {
   return (
     <Link
-      href={`/case/${c.docket_id}`}
+      href={p(lang, `/case/${c.docket_id}`)}
       className="flex shrink-0 items-center gap-2 px-5 py-2 font-mono text-[11px] text-ink-2 transition-colors hover:text-ink"
     >
       <span
@@ -26,7 +27,7 @@ function Item({ c }: { c: CaseRow }) {
 }
 
 /** CSS-only news ticker of the latest filings. Pauses on hover. */
-export default function Ticker({ cases }: { cases: CaseRow[] }) {
+export default function Ticker({ lang = "en", cases }: { lang?: Lang; cases: CaseRow[] }) {
   if (cases.length === 0) return null;
   return (
     <div className="ticker relative flex items-stretch overflow-hidden border-y border-rule bg-surface">
@@ -35,13 +36,13 @@ export default function Ticker({ cases }: { cases: CaseRow[] }) {
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-critical opacity-70" />
           <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-critical" />
         </span>
-        Live filings
+        {ui[lang].ticker}
       </div>
       <div className="ticker-track">
         {[0, 1].map((copy) => (
           <div key={copy} className="flex" aria-hidden={copy === 1}>
             {cases.map((c) => (
-              <Item key={`${copy}-${c.docket_id}`} c={c} />
+              <Item key={`${copy}-${c.docket_id}`} lang={lang} c={c} />
             ))}
           </div>
         ))}

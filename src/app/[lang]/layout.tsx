@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import { Montserrat, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { SITE_URL } from "@/lib/site";
-import "./globals.css";
+import { isLang, p, ui } from "@/lib/i18n";
+import LangSwitch from "@/components/LangSwitch";
+import "../globals.css";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic"],
 });
 
 const geistMono = Geist_Mono({
@@ -14,19 +17,39 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: {
-    default: "TRO Radar — check a brand for Schedule A lawsuits before you list",
-    template: "%s — TRO Radar",
-  },
-  description:
-    "Schedule A / TRO lawsuits freeze thousands of seller accounts every month. Check any brand against live federal court records before you list the product.",
-  openGraph: {
-    siteName: "TRO Radar",
-    type: "website",
-  },
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const en = {
+    title: {
+      default: "TRO Radar — check a brand for Schedule A lawsuits before you list",
+      template: "%s — TRO Radar",
+    },
+    description:
+      "Schedule A / TRO lawsuits freeze thousands of seller accounts every month. Check any brand against live federal court records before you list the product.",
+  };
+  const ru = {
+    title: {
+      default: "TRO Radar — проверка бренда на иски Schedule A до листинга",
+      template: "%s — TRO Radar",
+    },
+    description:
+      "Иски Schedule A / TRO ежемесячно замораживают тысячи аккаунтов продавцов. Проверьте любой бренд по живым записям федеральных судов США до того, как выставить товар.",
+  };
+  const t = lang === "ru" ? ru : en;
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: t.title,
+    description: t.description,
+    openGraph: { siteName: "TRO Radar", type: "website" },
+    alternates: {
+      languages: { en: `${SITE_URL}/`, ru: `${SITE_URL}/ru` },
+    },
+  };
+}
 
 function RadarMark() {
   return (
@@ -39,17 +62,27 @@ function RadarMark() {
   );
 }
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  if (!isLang(lang)) notFound();
+  const t = ui[lang];
+
   return (
     <html
-      lang="en"
+      lang={lang}
       className={`${montserrat.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
         <div aria-hidden className="h-1 bg-ink" />
         <header className="border-b border-rule bg-surface">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4">
-            <Link href="/" className="flex items-center gap-2.5 text-ink">
+            <Link href={p(lang, "/")} className="flex items-center gap-2.5 text-ink">
               <span className="relative flex" aria-hidden>
                 <RadarMark />
                 <span className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 animate-ping rounded-full bg-critical/60" />
@@ -57,9 +90,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <span className="font-display text-xl font-semibold tracking-tight">TRO Radar</span>
             </Link>
             <nav className="flex items-center gap-6 text-[11px] font-medium uppercase tracking-[0.14em] text-ink-2">
-              <Link href="/guide" className="hover:text-ink">How to use</Link>
-              <Link href="/recent" className="hidden hover:text-ink sm:block">Recent filings</Link>
-              <Link href="/plaintiffs" className="hidden hover:text-ink sm:block">Serial plaintiffs</Link>
+              <Link href={p(lang, "/guide")} className="hover:text-ink">{t.nav.guide}</Link>
+              <Link href={p(lang, "/recent")} className="hidden hover:text-ink sm:block">{t.nav.recent}</Link>
+              <Link href={p(lang, "/plaintiffs")} className="hidden hover:text-ink sm:block">{t.nav.plaintiffs}</Link>
+              <LangSwitch lang={lang} />
             </nav>
           </div>
         </header>
@@ -69,13 +103,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <footer className="mt-20 border-t border-rule bg-surface">
           <div className="mx-auto max-w-5xl space-y-3 px-5 py-8 text-xs leading-relaxed text-ink-muted">
             <p>
-              <strong className="text-ink-2">Not legal advice.</strong> TRO Radar surfaces public
-              court records for research purposes. A green result is not a guarantee of safety, and
-              a red result is not a legal determination. Consult an attorney before acting on
-              anything you see here.
+              <strong className="text-ink-2">{t.footer.disclaimerTitle}</strong>{" "}
+              {t.footer.disclaimer}
             </p>
             <p className="font-mono">
-              Data: federal court records via{" "}
+              {t.footer.data}{" "}
               <a
                 href="https://www.courtlistener.com/"
                 className="underline decoration-rule-strong underline-offset-2 hover:text-ink-2"
@@ -84,7 +116,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               >
                 CourtListener
               </a>
-              /RECAP (Free Law Project) · © 2026 TRO Radar
+              {t.footer.dataTail}
             </p>
           </div>
         </footer>

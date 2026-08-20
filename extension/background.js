@@ -5,7 +5,8 @@ const API_BASE = "https://tro-radar.vercel.app";
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg && msg.type === "check" && typeof msg.q === "string") {
-    fetch(`${API_BASE}/api/check?q=${encodeURIComponent(msg.q)}`)
+    const lang = msg.lang === "ru" ? "&lang=ru" : "";
+    fetch(`${API_BASE}/api/check?q=${encodeURIComponent(msg.q)}${lang}`)
       .then((r) => r.json())
       .then((data) => sendResponse({ ok: true, data }))
       .catch((err) => sendResponse({ ok: false, error: String(err) }));

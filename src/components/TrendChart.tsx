@@ -1,17 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ui, type Lang } from "@/lib/i18n";
 
 interface Point {
   month: string; // YYYY-MM
   total: number;
 }
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-function label(month: string): string {
+function label(month: string, months: readonly string[]): string {
   const [y, m] = month.split("-").map(Number);
-  return m === 1 ? `${MONTHS[0]} ’${String(y).slice(2)}` : MONTHS[m - 1];
+  return m === 1 ? `${months[0]} ’${String(y).slice(2)}` : months[m - 1];
 }
 
 function niceMax(n: number): number {
@@ -27,8 +26,9 @@ const W = 720;
 const H = 200;
 const PAD = { top: 12, right: 8, bottom: 24, left: 36 };
 
-export default function TrendChart({ data }: { data: Point[] }) {
+export default function TrendChart({ lang = "en", data }: { lang?: Lang; data: Point[] }) {
   const [hover, setHover] = useState<number | null>(null);
+  const t = ui[lang].chart;
   const [shown, setShown] = useState(false);
   const figRef = useRef<HTMLElement>(null);
 
@@ -107,7 +107,7 @@ export default function TrendChart({ data }: { data: Point[] }) {
                 opacity={i === last ? 0.45 : hover === i ? 0.8 : 1}
               />
               <text x={cx} y={H - 8} textAnchor="middle" fontSize={11} fill="#898781">
-                {label(d.month)}
+                {label(d.month, t.months)}
               </text>
               <rect
                 x={PAD.left + band * i}
@@ -128,12 +128,12 @@ export default function TrendChart({ data }: { data: Point[] }) {
           style={{ left: `${((PAD.left + band * hover + band / 2) / W) * 100}%`, transform: "translateX(-50%)" }}
         >
           <span className="text-ink-muted">{data[hover].month}</span>{" "}
-          <span className="font-medium">{data[hover].total} cases</span>
-          {hover === last && <span className="text-ink-muted"> (month to date)</span>}
+          <span className="font-medium">{data[hover].total} {t.cases}</span>
+          {hover === last && <span className="text-ink-muted"> {t.mtd}</span>}
         </div>
       )}
       <figcaption className="mt-2 font-mono text-[11px] text-ink-muted">
-        Schedule A cases filed per month · current month is partial
+        {t.caption}
       </figcaption>
     </figure>
   );

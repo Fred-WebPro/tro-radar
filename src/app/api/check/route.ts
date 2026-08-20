@@ -18,14 +18,16 @@ export function OPTIONS() {
 }
 
 export async function GET(req: Request) {
-  const q = new URL(req.url).searchParams.get("q")?.trim() ?? "";
+  const params = new URL(req.url).searchParams;
+  const q = params.get("q")?.trim() ?? "";
+  const lang = params.get("lang") === "ru" ? "ru" : "en";
   if (q.length < 2) {
     return NextResponse.json({ error: "Query too short" }, { status: 400, headers: CORS_HEADERS });
   }
 
   const matches = await searchCases(q);
   const groups = groupByBrand(matches);
-  const risk = assessRisk(matches, groups);
+  const risk = assessRisk(matches, groups, lang);
 
   return NextResponse.json(
     {

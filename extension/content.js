@@ -4,6 +4,26 @@
 
 (() => {
   const SITE_URL = "https://tro-radar.vercel.app";
+  const RU = (navigator.language || "").toLowerCase().startsWith("ru");
+  const L = RU
+    ? {
+        checking: "Проверяем товар по искам Schedule A…",
+        matched: "Совпадения:",
+        active: "активных",
+        viewActive: (n) => `Смотреть активные дела (${n}) →`,
+        details: "Подробнее →",
+        foot: "TRO Radar · публичные судебные записи · не юрконсультация",
+        checkPath: "/ru/check",
+      }
+    : {
+        checking: "Checking this product against Schedule A lawsuits…",
+        matched: "Matched:",
+        active: "active",
+        viewActive: (n) => `View ${n} active case${n === 1 ? "" : "s"} →`,
+        details: "See details →",
+        foot: "TRO Radar · public court records · not legal advice",
+        checkPath: "/check",
+      };
 
   const PRODUCT_PATTERNS = [
     { host: /(^|\.)aliexpress\.(com|us)$/i, path: /\/(item|i)\// },
@@ -28,11 +48,17 @@
     return t.slice(0, 140);
   }
 
-  const VERDICT_UI = {
-    red: { color: "#d03b3b", label: "HIGH RISK", icon: "⚠" },
-    yellow: { color: "#b98200", label: "CAUTION", icon: "◆" },
-    green: { color: "#0ca30c", label: "NO MATCHES", icon: "✓" },
-  };
+  const VERDICT_UI = RU
+    ? {
+        red: { color: "#d03b3b", label: "ВЫСОКИЙ РИСК", icon: "⚠" },
+        yellow: { color: "#b98200", label: "ОСТОРОЖНО", icon: "◆" },
+        green: { color: "#0ca30c", label: "СОВПАДЕНИЙ НЕТ", icon: "✓" },
+      }
+    : {
+        red: { color: "#d03b3b", label: "HIGH RISK", icon: "⚠" },
+        yellow: { color: "#b98200", label: "CAUTION", icon: "◆" },
+        green: { color: "#0ca30c", label: "NO MATCHES", icon: "✓" },
+      };
 
   let host = null;
   let lastCheckedUrl = null;
@@ -83,16 +109,15 @@
         <div class="card">
           <div class="head"><span class="label" style="color:#898781">TRO RADAR</span>
             <button class="close" title="Dismiss">✕</button></div>
-          <div class="body"><p class="detail" style="margin:0">Checking this product against Schedule A lawsuits…</p></div>
+          <div class="body"><p class="detail" style="margin:0">${L.checking}</p></div>
         </div>`;
     } else if (state === "result") {
       const d = payload;
       const ui = VERDICT_UI[d.verdict] || VERDICT_UI.green;
       const brands = (d.brands || [])
         .slice(0, 3)
-        .map((b) => `<b>${escapeHtml(b.brand)}</b> (${b.active} active)`)
+        .map((b) => `<b>${escapeHtml(b.brand)}</b> (${b.active} ${L.active})`)
         .join(", ");
-      const caseWord = d.active_cases === 1 ? "case" : "cases";
       wrap.innerHTML = `${base}
         <div class="card" style="border-color:${ui.color}">
           <div class="head">
@@ -101,12 +126,12 @@
           </div>
           <div class="body">
             <p class="headline">${escapeHtml(d.headline)}</p>
-            ${brands ? `<p class="brands">Matched: ${brands}</p>` : ""}
-            <a class="link" href="${SITE_URL}/check?q=${encodeURIComponent(d.query)}" target="_blank" rel="noopener">
-              ${d.active_cases > 0 ? `View ${d.active_cases} active ${caseWord} →` : "See details →"}
+            ${brands ? `<p class="brands">${L.matched} ${brands}</p>` : ""}
+            <a class="link" href="${SITE_URL}${L.checkPath}?q=${encodeURIComponent(d.query)}" target="_blank" rel="noopener">
+              ${d.active_cases > 0 ? L.viewActive(d.active_cases) : L.details}
             </a>
           </div>
-          <div class="foot">TRO Radar · public court records · not legal advice</div>
+          <div class="foot">${L.foot}</div>
         </div>`;
     }
 
@@ -126,7 +151,7 @@
     if (q.length < 4) return;
     lastCheckedUrl = location.href;
     renderBadge("loading");
-    chrome.runtime.sendMessage({ type: "check", q }, (resp) => {
+    chrome.runtime.sendMessage({ type: "check", q, lang: RU ? "ru" : "en" }, (resp) => {
       if (location.href !== lastCheckedUrl) return; // navigated away meanwhile
       if (resp && resp.ok && resp.data && resp.data.verdict) {
         renderBadge("result", resp.data);
