@@ -3,6 +3,7 @@ import type { InStatement } from "@libsql/client";
 import { query, run, batch, batchQuery } from "./db";
 import { extractPlaintiff, extractBrand, normalizeBrand } from "./brands";
 import { normalizeFirm } from "./firms";
+import { isPlausibleBrandMatch } from "./match";
 import type { CLCase } from "./courtlistener";
 
 export interface CaseRow {
@@ -110,15 +111,29 @@ function toFtsQuery(q: string): string | null {
 export async function searchCases(q: string, limit = 60): Promise<CaseRow[]> {
   const fts = toFtsQuery(q);
   if (!fts) return [];
-  return query<CaseRow>(
+  // Over-fetch, then apply the precision filter: full-text retrieval alone
+  // matches any shared word and would flag half the catalogue.
+  const rows = await query<CaseRow>(
     `SELECT c.* FROM cases_fts f
      JOIN cases c ON c.docket_id = f.rowid
      WHERE cases_fts MATCH ?
      ORDER BY bm25(cases_fts, 1.0, 5.0, 10.0),
        (c.date_terminated IS NULL) DESC, c.date_filed DESC
      LIMIT ?`,
-    [fts, limit]
+    [fts, Math.max(limit * 5, 300)]
   );
+
+  const verdict = new Map<string, boolean>();
+  return rows
+    .filter((r) => {
+      let ok = verdict.get(r.brand_norm);
+      if (ok === undefined) {
+        ok = isPlausibleBrandMatch(q, r.brand);
+        verdict.set(r.brand_norm, ok);
+      }
+      return ok;
+    })
+    .slice(0, limit);
 }
 
 /**
@@ -135,7 +150,7 @@ export async function searchBrandGroupsBulk(queries: string[]): Promise<BrandGro
     WHERE cases_fts MATCH ?
     GROUP BY c.brand_norm
     ORDER BY active DESC, total DESC
-    LIMIT 5`;
+    LIMIT 12`;
 
   const ftsQueries = queries.map(toFtsQuery);
   const statements = ftsQueries
@@ -147,17 +162,18 @@ export async function searchBrandGroupsBulk(queries: string[]): Promise<BrandGro
   // Re-align results with the original list: unmatched titles get no groups.
   const out: BrandGroup[][] = [];
   let i = 0;
-  for (const fts of ftsQueries) {
-    if (fts === null) out.push([]);
-    else
-      out.push(
-        (results[i++] ?? []).map((g) => ({
-          ...g,
-          total: Number(g.total),
-          active: Number(g.active),
-        }))
-      );
-  }
+  ftsQueries.forEach((fts, qi) => {
+    if (fts === null) {
+      out.push([]);
+      return;
+    }
+    const groups = (results[i++] ?? [])
+      .map((g) => ({ ...g, total: Number(g.total), active: Number(g.active) }))
+      // Same precision filter as searchCases — a shared word is not a brand.
+      .filter((g) => isPlausibleBrandMatch(queries[qi], g.brand))
+      .slice(0, 5);
+    out.push(groups);
+  });
   return out;
 }
 
