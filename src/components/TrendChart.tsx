@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Point {
   month: string; // YYYY-MM
@@ -29,6 +29,30 @@ const PAD = { top: 12, right: 8, bottom: 24, left: 36 };
 
 export default function TrendChart({ data }: { data: Point[] }) {
   const [hover, setHover] = useState<number | null>(null);
+  const [shown, setShown] = useState(false);
+  const figRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const el = figRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      setShown(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShown(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   if (data.length === 0) return null;
 
   const max = niceMax(Math.max(...data.map((d) => d.total)));
@@ -41,7 +65,7 @@ export default function TrendChart({ data }: { data: Point[] }) {
   const last = data.length - 1;
 
   return (
-    <figure className="relative">
+    <figure ref={figRef} className={`relative ${shown ? "chart-shown" : ""}`}>
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="w-full"
@@ -75,7 +99,13 @@ export default function TrendChart({ data }: { data: Point[] }) {
           const path = `M ${x0} ${bottom} V ${top + r} Q ${x0} ${top} ${x0 + r} ${top} H ${x0 + barW - r} Q ${x0 + barW} ${top} ${x0 + barW} ${top + r} V ${bottom} Z`;
           return (
             <g key={d.month}>
-              <path d={path} fill="#2a78d6" opacity={i === last ? 0.45 : hover === i ? 0.8 : 1} />
+              <path
+                d={path}
+                className="chart-bar"
+                style={{ animationDelay: `${i * 45}ms` }}
+                fill="#2a78d6"
+                opacity={i === last ? 0.45 : hover === i ? 0.8 : 1}
+              />
               <text x={cx} y={H - 8} textAnchor="middle" fontSize={11} fill="#898781">
                 {label(d.month)}
               </text>

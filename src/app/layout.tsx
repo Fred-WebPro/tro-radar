@@ -34,7 +34,7 @@ function RadarMark() {
       <circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
       <circle cx="10" cy="10" r="4.5" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.5" />
       <line x1="10" y1="10" x2="16" y2="4.5" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="10" cy="10" r="1.6" fill="currentColor" />
+      <circle cx="10" cy="10" r="1.6" fill="#d03b3b" />
     </svg>
   );
 }
@@ -50,7 +50,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <header className="border-b border-rule bg-surface">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4">
             <Link href="/" className="flex items-center gap-2.5 text-ink">
-              <RadarMark />
+              <span className="relative flex" aria-hidden>
+                <RadarMark />
+                <span className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 animate-ping rounded-full bg-critical/60" />
+              </span>
               <span className="font-display text-xl font-semibold tracking-tight">TRO Radar</span>
             </Link>
             <nav className="flex items-center gap-6 text-[11px] font-medium uppercase tracking-[0.14em] text-ink-2">
