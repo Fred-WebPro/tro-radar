@@ -104,3 +104,9 @@ for (const size of [16, 48, 128]) {
   fs.writeFileSync(path.join(outDir, `icon${size}.png`), makePng(size));
   console.log(`icon${size}.png written`);
 }
+
+// Site favicon via the Next.js app-dir file convention.
+const appDir = path.join(process.cwd(), "src", "app");
+fs.writeFileSync(path.join(appDir, "icon.png"), makePng(64));
+fs.writeFileSync(path.join(appDir, "apple-icon.png"), makePng(180));
+console.log("src/app/icon.png + apple-icon.png written");
