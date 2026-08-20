@@ -5,18 +5,31 @@ import { NextResponse } from "next/server";
 import { searchCases, groupByBrand } from "@/lib/repo";
 import { assessRisk } from "@/lib/risk";
 
+// Public read-only API; CORS is open so the browser extension (and anyone
+// else) can call it directly.
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS_HEADERS });
+}
+
 export async function GET(req: Request) {
   const q = new URL(req.url).searchParams.get("q")?.trim() ?? "";
   if (q.length < 2) {
-    return NextResponse.json({ error: "Query too short" }, { status: 400 });
+    return NextResponse.json({ error: "Query too short" }, { status: 400, headers: CORS_HEADERS });
   }
 
   const matches = await searchCases(q);
   const groups = groupByBrand(matches);
   const risk = assessRisk(matches, groups);
 
-  return NextResponse.json({
-    query: q,
+  return NextResponse.json(
+    {
+      query: q,
     verdict: risk.verdict,
     headline: risk.headline,
     detail: risk.detail,
@@ -34,7 +47,9 @@ export async function GET(req: Request) {
       date_terminated: c.date_terminated,
       courtlistener_url: c.absolute_url,
     })),
-    disclaimer:
-      "Public court records via CourtListener/RECAP. Not legal advice; absence of matches is not a guarantee of safety.",
-  });
+      disclaimer:
+        "Public court records via CourtListener/RECAP. Not legal advice; absence of matches is not a guarantee of safety.",
+    },
+    { headers: CORS_HEADERS }
+  );
 }

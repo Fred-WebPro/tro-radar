@@ -20,11 +20,16 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const pagesParam = Number(new URL(req.url).searchParams.get("pages") ?? "10");
+  const params = new URL(req.url).searchParams;
+  const pagesParam = Number(params.get("pages") ?? "10");
   const maxPages = Math.min(Math.max(1, pagesParam || 10), 20);
+  // Optional backfill window; only takes effect when starting a fresh crawl
+  // (an in-progress cursor always continues first).
+  const sinceParam = params.get("since") ?? undefined;
+  const since = sinceParam && /^\d{4}-\d{2}-\d{2}$/.test(sinceParam) ? sinceParam : undefined;
 
   try {
-    const result = await runIngest({ maxPages });
+    const result = await runIngest({ maxPages, since });
     return NextResponse.json(result);
   } catch (err) {
     return NextResponse.json(

@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "TRO Radar — Schedule A lawsuit check",
+  "version": "0.1.0",
+  "description": "Check products for active Schedule A / TRO trademark lawsuits before you list them. Data from public federal court records.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "TRO Radar — check a brand",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "host_permissions": ["https://tro-radar.vercel.app/*"],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.aliexpress.com/*",
+        "https://*.aliexpress.us/*",
+        "https://*.temu.com/*",
+        "https://*.1688.com/*",
+        "https://*.alibaba.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
