@@ -13,6 +13,15 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    // Extension content scripts share globals through the manifest's script
+    // list rather than imports, so cross-file references look unused here.
+    files: ["extension/**/*.js"],
+    languageOptions: {
+      globals: { chrome: "readonly", TRO_I18N: "readonly", TRO_SITES: "readonly" },
+    },
+    rules: { "@typescript-eslint/no-unused-vars": "off" },
+  },
 ]);
 
 export default eslintConfig;

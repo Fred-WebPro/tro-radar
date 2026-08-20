@@ -17,6 +17,8 @@ export interface CLCase {
   docket_absolute_url: string;
   pacer_case_id: string | null;
   party: string[];
+  /** Law firms on the docket. Only populated once RECAP has the full docket. */
+  firm?: string[];
 }
 
 export interface CLPage {

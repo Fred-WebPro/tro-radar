@@ -1,0 +1,54 @@
+/* Injected into marketplace pages. Everything is namespaced and uses
+   !important sparingly — only where host styles would otherwise win. */
+
+.tro-dot {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 9999;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font: 700 10px/1.4 ui-monospace, Consolas, monospace;
+  letter-spacing: 0.06em;
+  color: #fff;
+  text-shadow: none;
+  pointer-events: auto;
+  cursor: help;
+  box-shadow: 0 1px 4px rgba(22, 21, 18, 0.3);
+}
+.tro-dot--red { background: #d03b3b; }
+.tro-dot--yellow { background: #b98200; }
+.tro-dot--green { background: rgba(12, 163, 12, 0.85); }
+
+.tro-card-anchor { position: relative !important; }
+
+.tro-scan-pill {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 2147483646;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #fcfcfb;
+  border: 2px solid #161512;
+  color: #161512;
+  font: 500 12px/1.4 -apple-system, "Segoe UI", system-ui, sans-serif;
+  box-shadow: 0 4px 18px rgba(22, 21, 18, 0.18);
+}
+.tro-scan-pill b { font-weight: 700; }
+.tro-scan-pill--red { border-color: #d03b3b; }
+.tro-scan-pill__x {
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: #898781;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 0 0 4px;
+}
+.tro-scan-pill__x:hover { color: #161512; }

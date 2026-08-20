@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>TRO Radar — Settings</title>
+  <style>
+    :root { color-scheme: light; }
+    body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; background: #f6f5f1;
+      color: #161512; margin: 0; }
+    .top { height: 4px; background: #161512; }
+    .wrap { max-width: 640px; margin: 0 auto; padding: 32px 20px 60px; }
+    h1 { font-size: 26px; letter-spacing: -0.02em; margin: 0 0 4px; }
+    .sub { color: #52514e; font-size: 14px; margin: 0 0 28px; }
+    section { border-top: 1px solid #e3e1d8; padding: 20px 0; }
+    h2 { font-family: ui-monospace, Consolas, monospace; font-size: 11px; text-transform: uppercase;
+      letter-spacing: .16em; color: #52514e; margin: 0 0 10px; }
+    p { font-size: 14px; line-height: 1.55; color: #52514e; margin: 0 0 12px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    input[type=email] { flex: 1; min-width: 220px; border: 1px solid #c3c2b7; background: #fcfcfb;
+      padding: 9px 12px; font-size: 14px; color: #161512; }
+    input:focus { outline: none; border-color: #161512; }
+    button { border: none; background: #161512; color: #f6f5f1; padding: 10px 16px; font-size: 11px;
+      font-weight: 600; letter-spacing: .1em; cursor: pointer; }
+    button:hover { background: #333; }
+    button.ghost { background: none; color: #52514e; border: 1px solid #c3c2b7; }
+    button.ghost:hover { background: #fff; color: #161512; }
+    .ok { color: #006300; font-size: 13px; }
+    .item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #fcfcfb;
+      border: 1px solid #e3e1d8; margin-bottom: 6px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+    .item .t { flex: 1; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .item .n { font-family: ui-monospace, Consolas, monospace; font-size: 11px; color: #898781; }
+    .item .x { cursor: pointer; border: none; background: none; color: #898781; font-size: 15px; padding: 0 2px; }
+    .item .x:hover { color: #d03b3b; }
+    .plan { display: inline-block; font-family: ui-monospace, Consolas, monospace; font-size: 10px;
+      text-transform: uppercase; letter-spacing: .1em; border: 1px solid #c3c2b7; padding: 2px 7px; }
+    code { font-family: ui-monospace, Consolas, monospace; font-size: 12px; background: #fcfcfb;
+      border: 1px solid #e3e1d8; padding: 2px 6px; }
+    .muted { font-size: 12px; color: #898781; }
+  </style>
+</head>
+<body>
+  <div class="top"></div>
+  <div class="wrap">
+    <h1 id="h1">Settings</h1>
+    <p class="sub" id="sub">Where your lawsuit alerts go, and what you're watching.</p>
+
+    <section>
+      <h2 id="h2plan">Plan</h2>
+      <p><span class="plan" id="planBadge">FREE</span> <span id="planInfo"></span></p>
+    </section>
+
+    <section>
+      <h2 id="h2email">Email alerts</h2>
+      <p id="pEmail">We'll email you the day a new lawsuit hits a product in your portfolio.</p>
+      <div class="row">
+        <input type="email" id="email" placeholder="you@store.com" />
+        <button id="saveEmail">SAVE</button>
+        <span class="ok" id="emailOk"></span>
+      </div>
+    </section>
+
+    <section>
+      <h2 id="h2tg">Telegram alerts</h2>
+      <p id="pTg">Get alerts instantly in Telegram — usually faster than you'd check email.</p>
+      <div class="row">
+        <button id="tgConnect">CONNECT TELEGRAM</button>
+        <span class="ok" id="tgStatus"></span>
+      </div>
+      <p class="muted" id="tgHint" style="margin-top:8px"></p>
+    </section>
+
+    <section>
+      <h2 id="h2pf">Portfolio</h2>
+      <p id="pPf">Products you're monitoring. Remove anything you no longer sell.</p>
+      <div id="items"></div>
+    </section>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>

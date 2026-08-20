@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server";
 import { searchCases, groupByBrand } from "@/lib/repo";
 import { assessRisk } from "@/lib/risk";
+import { getPlaintiffIntel, computeRiskScore } from "@/lib/intel";
 
 // Public read-only API; CORS is open so the browser extension (and anyone
 // else) can call it directly.
@@ -29,6 +30,10 @@ export async function GET(req: Request) {
   const groups = groupByBrand(matches);
   const risk = assessRisk(matches, groups, lang);
 
+  // Enforcement intelligence for the strongest matching brand.
+  const intel = groups[0] ? await getPlaintiffIntel(groups[0].brand_norm) : null;
+  const score = computeRiskScore(intel, lang);
+
   return NextResponse.json(
     {
       query: q,
@@ -38,6 +43,23 @@ export async function GET(req: Request) {
     active_cases: risk.activeCount,
     closed_cases: risk.closedCount,
     last_filed: risk.lastFiled,
+    risk_score: score.score,
+    risk_level: score.level,
+    risk_summary: score.summary,
+    risk_factors: score.factors,
+    intel: intel && {
+      brand: intel.brand,
+      total_cases: intel.totalCases,
+      active_cases: intel.activeCases,
+      first_filed: intel.firstFiled,
+      last_filed: intel.lastFiled,
+      days_since_last_filing: intel.daysSinceLastFiling,
+      filings_last_90d: intel.filingsLast90d,
+      filings_last_365d: intel.filingsLast365d,
+      median_days_between: intel.medianDaysBetween,
+      courts: intel.courts,
+      firms: intel.firms,
+    },
     brands: groups.slice(0, 10),
     cases: matches.slice(0, 20).map((c) => ({
       docket_id: c.docket_id,

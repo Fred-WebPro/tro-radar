@@ -1,36 +1,49 @@
 {
   "manifest_version": 3,
   "name": "TRO Radar — Schedule A lawsuit check",
-  "version": "0.1.0",
-  "description": "Check products for active Schedule A / TRO trademark lawsuits before you list them. Data from public federal court records.",
+  "version": "0.2.0",
+  "description": "See which products are hit by active Schedule A trademark lawsuits — on search results, product pages, and your own listings.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
+  "permissions": ["storage", "alarms"],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "TRO Radar — check a brand",
+    "default_title": "TRO Radar",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png"
     }
   },
+  "options_page": "options.html",
   "host_permissions": ["https://tro-radar.vercel.app/*"],
   "content_scripts": [
     {
       "matches": [
         "https://*.aliexpress.com/*",
         "https://*.aliexpress.us/*",
+        "https://*.aliexpress.ru/*",
         "https://*.temu.com/*",
         "https://*.1688.com/*",
-        "https://*.alibaba.com/*"
+        "https://*.alibaba.com/*",
+        "https://*.amazon.com/*",
+        "https://*.ebay.com/*",
+        "https://*.etsy.com/*"
       ],
-      "js": ["content.js"],
+      "js": ["sites.js", "i18n.js", "content.js"],
+      "css": ["overlay.css"],
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/icon48.png"],
+      "matches": ["<all_urls>"]
     }
   ]
 }

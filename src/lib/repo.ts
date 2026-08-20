@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { InStatement } from "@libsql/client";
-import { query, run, batch } from "./db";
+import { query, run, batch, batchQuery } from "./db";
 import { extractPlaintiff, extractBrand, normalizeBrand } from "./brands";
+import { normalizeFirm } from "./firms";
 import type { CLCase } from "./courtlistener";
 
 export interface CaseRow {
@@ -18,6 +19,7 @@ export interface CaseRow {
   absolute_url: string;
   pacer_case_id: string | null;
   parties: string | null;
+  firms: string | null;
 }
 
 export interface BrandGroup {
@@ -29,8 +31,8 @@ export interface BrandGroup {
 }
 
 const UPSERT_SQL = `INSERT INTO cases (docket_id, case_name, plaintiff, brand, brand_norm, court_id, court,
-    docket_number, date_filed, date_terminated, absolute_url, pacer_case_id, parties)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    docket_number, date_filed, date_terminated, absolute_url, pacer_case_id, parties, firms)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   ON CONFLICT(docket_id) DO UPDATE SET
     case_name = excluded.case_name,
     plaintiff = excluded.plaintiff,
@@ -39,6 +41,9 @@ const UPSERT_SQL = `INSERT INTO cases (docket_id, case_name, plaintiff, brand, b
     docket_number = excluded.docket_number,
     date_filed = excluded.date_filed,
     date_terminated = excluded.date_terminated,
+    -- Firm data arrives later, once RECAP pulls the full docket; never
+    -- overwrite what we have with an empty list.
+    firms = COALESCE(NULLIF(excluded.firms, '[]'), cases.firms),
     updated_at = datetime('now')`;
 
 function upsertStatement(c: CLCase): InStatement | null {
@@ -61,13 +66,23 @@ function upsertStatement(c: CLCase): InStatement | null {
       `https://www.courtlistener.com${c.docket_absolute_url}`,
       c.pacer_case_id,
       JSON.stringify(c.party ?? []),
+      JSON.stringify(c.firm ?? []),
     ],
   };
 }
 
+const FIRM_SQL = `INSERT INTO case_firms (docket_id, firm, firm_norm) VALUES (?, ?, ?)
+  ON CONFLICT(docket_id, firm_norm) DO NOTHING`;
+
 /** Upsert a page of cases in one round trip. Returns how many were processed. */
 export async function upsertCases(cases: CLCase[]): Promise<number> {
   const stmts = cases.map(upsertStatement).filter((s): s is InStatement => s !== null);
+  for (const c of cases) {
+    for (const firm of c.firm ?? []) {
+      const norm = normalizeFirm(firm);
+      if (norm) stmts.push({ sql: FIRM_SQL, args: [c.docket_id, firm, norm] });
+    }
+  }
   await batch(stmts);
   return stmts.length;
 }
@@ -104,6 +119,46 @@ export async function searchCases(q: string, limit = 60): Promise<CaseRow[]> {
      LIMIT ?`,
     [fts, limit]
   );
+}
+
+/**
+ * Verdict-level lookup for many titles at once. Returns brand groups only —
+ * enough to colour a badge — in a single database round trip.
+ */
+export async function searchBrandGroupsBulk(queries: string[]): Promise<BrandGroup[][]> {
+  const sql = `SELECT c.brand AS brand, c.brand_norm AS brand_norm,
+      COUNT(*) AS total,
+      SUM(CASE WHEN c.date_terminated IS NULL THEN 1 ELSE 0 END) AS active,
+      MAX(c.date_filed) AS last_filed
+    FROM cases_fts f
+    JOIN cases c ON c.docket_id = f.rowid
+    WHERE cases_fts MATCH ?
+    GROUP BY c.brand_norm
+    ORDER BY active DESC, total DESC
+    LIMIT 5`;
+
+  const ftsQueries = queries.map(toFtsQuery);
+  const statements = ftsQueries
+    .filter((f): f is string => f !== null)
+    .map((fts) => ({ sql, args: [fts] }));
+
+  const results = await batchQuery<BrandGroup>(statements);
+
+  // Re-align results with the original list: unmatched titles get no groups.
+  const out: BrandGroup[][] = [];
+  let i = 0;
+  for (const fts of ftsQueries) {
+    if (fts === null) out.push([]);
+    else
+      out.push(
+        (results[i++] ?? []).map((g) => ({
+          ...g,
+          total: Number(g.total),
+          active: Number(g.active),
+        }))
+      );
+  }
+  return out;
 }
 
 export function groupByBrand(rows: CaseRow[]): BrandGroup[] {

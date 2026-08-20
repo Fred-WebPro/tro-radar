@@ -1,0 +1,51 @@
+// Shared UI strings. The extension follows the browser language.
+
+const TRO_RU = (navigator.language || "").toLowerCase().startsWith("ru");
+
+const TRO_I18N = TRO_RU
+  ? {
+      lang: "ru",
+      sitePath: "/ru",
+      checking: "Проверяем товар по искам Schedule A…",
+      verdict: { red: "ВЫСОКИЙ РИСК", yellow: "ОСТОРОЖНО", green: "СОВПАДЕНИЙ НЕТ" },
+      matched: "Совпадения:",
+      active: "активных",
+      viewActive: (n) => `Смотреть активные дела (${n}) →`,
+      details: "Подробнее →",
+      foot: "TRO Radar · публичные судебные записи · не юрконсультация",
+      addToPortfolio: "Следить за товаром",
+      inPortfolio: "✓ В портфеле",
+      portfolioFull: "Лимит портфеля исчерпан",
+      scanning: "Сканируем выдачу…",
+      scanned: (red, total) => `${red} из ${total} товаров с активными исками`,
+      scanClean: (total) => `Проверено ${total} товаров — активных исков нет`,
+      scanLimit: "Дневной лимит бесплатных проверок исчерпан",
+      riskScore: "Риск",
+      cadence: (d) => `иск каждые ~${d} дн.`,
+      lastFiling: (d) => (d <= 1 ? "иск сегодня" : `последний иск ${d} дн. назад`),
+      proOnly: "Pro",
+      dismiss: "Скрыть",
+    }
+  : {
+      lang: "en",
+      sitePath: "",
+      checking: "Checking this product against Schedule A lawsuits…",
+      verdict: { red: "HIGH RISK", yellow: "CAUTION", green: "NO MATCHES" },
+      matched: "Matched:",
+      active: "active",
+      viewActive: (n) => `View ${n} active case${n === 1 ? "" : "s"} →`,
+      details: "See details →",
+      foot: "TRO Radar · public court records · not legal advice",
+      addToPortfolio: "Watch this product",
+      inPortfolio: "✓ In portfolio",
+      portfolioFull: "Portfolio limit reached",
+      scanning: "Scanning results…",
+      scanned: (red, total) => `${red} of ${total} products have active lawsuits`,
+      scanClean: (total) => `Scanned ${total} products — no active lawsuits`,
+      scanLimit: "Daily free scan limit reached",
+      riskScore: "Risk",
+      cadence: (d) => `new case every ~${d}d`,
+      lastFiling: (d) => (d <= 1 ? "filed today" : `last filed ${d}d ago`),
+      proOnly: "Pro",
+      dismiss: "Dismiss",
+    };

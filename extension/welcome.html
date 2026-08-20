@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>TRO Radar</title>
+  <style>
+    :root { color-scheme: light; }
+    body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; background: #f6f5f1;
+      color: #161512; margin: 0; }
+    .top { height: 4px; background: #161512; }
+    .wrap { max-width: 680px; margin: 0 auto; padding: 48px 20px 80px; }
+    .over { font-family: ui-monospace, Consolas, monospace; font-size: 11px; text-transform: uppercase;
+      letter-spacing: .16em; color: #898781; margin: 0 0 12px; }
+    h1 { font-size: 40px; letter-spacing: -0.03em; line-height: 1.05; margin: 0 0 16px; }
+    .lead { font-size: 17px; line-height: 1.6; color: #52514e; margin: 0 0 36px; }
+    ol { counter-reset: s; list-style: none; padding: 0; margin: 0 0 36px; }
+    li { border-top: 2px solid #161512; padding: 16px 0 20px; }
+    .n { font-family: ui-monospace, Consolas, monospace; font-size: 20px; color: #898781; }
+    .t { font-size: 17px; font-weight: 600; margin: 6px 0 6px; }
+    .d { font-size: 14px; line-height: 1.6; color: #52514e; margin: 0; }
+    .demo { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 3px;
+      font: 700 11px/1.4 ui-monospace, Consolas, monospace; color: #fff; background: #d03b3b;
+      vertical-align: middle; }
+    .cta { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    a.btn { display: inline-block; background: #161512; color: #f6f5f1; text-decoration: none;
+      padding: 13px 22px; font-size: 12px; font-weight: 600; letter-spacing: .1em; }
+    a.btn:hover { background: #333; }
+    a.ghost { display: inline-block; border: 1px solid #c3c2b7; color: #161512; text-decoration: none;
+      padding: 12px 20px; font-size: 12px; font-weight: 600; letter-spacing: .1em; }
+    a.ghost:hover { border-color: #161512; }
+    .foot { margin-top: 40px; font-size: 12px; color: #898781; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="top"></div>
+  <div class="wrap">
+    <p class="over" id="over">Installed · 30-second tour</p>
+    <h1 id="h1">You're covered.</h1>
+    <p class="lead" id="lead"></p>
+
+    <ol id="steps"></ol>
+
+    <div class="cta">
+      <a class="btn" id="try" href="https://www.aliexpress.com/wholesale?SearchText=motorcycle+fairing" target="_blank">TRY IT ON ALIEXPRESS</a>
+      <a class="ghost" id="guide" href="https://tro-radar.vercel.app/guide" target="_blank">FULL GUIDE</a>
+    </div>
+
+    <p class="foot" id="foot"></p>
+  </div>
+  <script src="welcome.js"></script>
+</body>
+</html>
