@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { InStatement } from "@libsql/client";
 import { query, run, batch, batchQuery } from "./db";
 import { extractPlaintiff, extractBrand, normalizeBrand } from "./brands";
-import { normalizeFirm } from "./firms";
+import { normalizeFirm, isRealFirm } from "./firms";
 import { isPlausibleBrandMatch } from "./match";
 import type { CLCase } from "./courtlistener";
 
@@ -80,6 +80,7 @@ export async function upsertCases(cases: CLCase[]): Promise<number> {
   const stmts = cases.map(upsertStatement).filter((s): s is InStatement => s !== null);
   for (const c of cases) {
     for (const firm of c.firm ?? []) {
+      if (!isRealFirm(firm)) continue;
       const norm = normalizeFirm(firm);
       if (norm) stmts.push({ sql: FIRM_SQL, args: [c.docket_id, firm, norm] });
     }

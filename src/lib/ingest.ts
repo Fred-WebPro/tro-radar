@@ -98,6 +98,9 @@ async function crawl(opts: { maxPages?: number; since?: string }): Promise<Inges
 
   const done = !url;
   if (done) {
+    // Self-heal rows written before firm names were validated ("Il", "LLC").
+    const db = await getDb();
+    await db.execute("DELETE FROM case_firms WHERE LENGTH(firm_norm) < 4");
     const lastFiled = (await getSyncState("last_filed_date")) ?? "";
     if (newestFiled > lastFiled) await setSyncState("last_filed_date", newestFiled);
     await setSyncState("ingest_cursor", "");

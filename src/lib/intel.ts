@@ -61,7 +61,7 @@ export async function getPlaintiffIntel(brandNorm: string): Promise<PlaintiffInt
          (SELECT COUNT(DISTINCT docket_id) FROM case_firms x WHERE x.firm_norm = cf.firm_norm) AS total_cases
        FROM case_firms cf
        JOIN cases c ON c.docket_id = cf.docket_id
-       WHERE c.brand_norm = ?
+       WHERE c.brand_norm = ? AND LENGTH(cf.firm_norm) >= 4
        GROUP BY cf.firm_norm ORDER BY cases DESC LIMIT 5`,
       [brandNorm]
     ),
