@@ -1,26 +1,41 @@
-name: Sync court data
+name: Sync and monitor
 
-# Optional alternative to the built-in Vercel Cron (which runs daily).
-# Enable the schedule below for 6-hourly freshness after adding the
-# TURSO_DATABASE_URL / TURSO_AUTH_TOKEN repository secrets.
+# Vercel Hobby crons are capped at one run per day, which would make "instant
+# alerts" no faster than the free daily digest. This workflow keeps the real
+# cadence: pull new filings, then re-check portfolios, every 30 minutes.
+# Free on public repositories.
 on:
-  # schedule:
-  #   - cron: "17 */6 * * *"
+  schedule:
+    - cron: "*/30 * * * *"
   workflow_dispatch: {}
 
+concurrency:
+  group: sync-and-monitor
+  cancel-in-progress: false
+
 jobs:
-  ingest:
+  run:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
+    env:
+      SITE: ${{ vars.SITE_URL || 'https://tro-radar.vercel.app' }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run ingest
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-          CL_API_TOKEN: ${{ secrets.CL_API_TOKEN }}
+      - name: Pull new filings
+        run: |
+          auth=()
+          [ -n "$CRON_SECRET" ] && auth=(-H "Authorization: Bearer $CRON_SECRET")
+          # A few chunks per run keeps each call well inside the function limit.
+          for i in 1 2 3; do
+            body=$(curl -sS -m 300 "${auth[@]}" "$SITE/api/cron/ingest?pages=10") || exit 1
+            echo "ingest $i: $body"
+            echo "$body" | grep -q '"done":true' && break
+            sleep 2
+          done
+
+      - name: Re-check portfolios and alert
+        run: |
+          auth=()
+          [ -n "$CRON_SECRET" ] && auth=(-H "Authorization: Bearer $CRON_SECRET")
+          body=$(curl -sS -m 300 "${auth[@]}" "$SITE/api/cron/monitor?instant=1") || exit 1
+          echo "monitor: $body"

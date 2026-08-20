@@ -1,27 +1,29 @@
-name: Send watchlist digest
+name: Daily digest
 
-# Optional alternative to the built-in Vercel Cron. Enable the schedule
-# after adding the repository secrets.
+# Watchlist digest and the sweep that covers free-tier portfolios (the 30-minute
+# job only alerts Pro accounts). Vercel Cron also runs these daily; this
+# workflow is the backup that keeps working if the Vercel schedule is paused.
 on:
-  # schedule:
-  #   - cron: "10 13 * * *"
+  schedule:
+    - cron: "10 13 * * *"
   workflow_dispatch: {}
 
 jobs:
-  digest:
+  run:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    env:
+      SITE: ${{ vars.SITE_URL || 'https://tro-radar.vercel.app' }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run digest
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          DIGEST_FROM: ${{ secrets.DIGEST_FROM }}
-          SITE_URL: ${{ vars.SITE_URL }}
+      - name: Monitor all portfolios
+        run: |
+          auth=()
+          [ -n "$CRON_SECRET" ] && auth=(-H "Authorization: Bearer $CRON_SECRET")
+          echo "monitor: $(curl -sS -m 300 "${auth[@]}" "$SITE/api/cron/monitor")"
+
+      - name: Send watchlist digests
+        run: |
+          auth=()
+          [ -n "$CRON_SECRET" ] && auth=(-H "Authorization: Bearer $CRON_SECRET")
+          echo "digest: $(curl -sS -m 300 "${auth[@]}" "$SITE/api/cron/digest")"

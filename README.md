@@ -41,9 +41,10 @@ backfill, `-- --max-pages 20` for a bounded run.
 5. **CourtListener token** (free registration): add `CL_API_TOKEN` to remove anonymous
    API rate limits. Optional: `CRON_SECRET` locks the two `/api/cron/*` endpoints.
 
-The GitHub Actions in `.github/workflows/` are an optional alternative scheduler
-(6-hourly instead of daily); enable their `schedule` blocks and add repo secrets if
-you want them. `SITE_URL` is derived automatically on Vercel.
+The GitHub Actions in `.github/workflows/` drive the fast cadence (every 30 minutes) that
+Vercel Hobby crons cannot: they call the deployed `/api/cron/*` endpoints over HTTP, so
+they need no database credentials — only an optional `CRON_SECRET` secret and a
+`SITE_URL` variable. `SITE_URL` is derived automatically inside the app on Vercel.
 
 ## What's inside
 
@@ -104,6 +105,16 @@ only needed to receive alerts.
 
 A red verdict is never paywalled — the warning is the trust-builder; the paid tier sells
 scale and automation.
+
+**Billing is not wired yet**: `plan` is a column on `accounts`, so upgrading today means
+setting it by hand. Adding Lemon Squeezy or Stripe means one webhook that flips that
+column — deliberately left until the free tier proves demand.
+
+**Alert cadence** depends on the scheduler. Vercel Hobby crons are capped at *one run per
+day*, so instant alerts come from the GitHub Actions workflow
+(`.github/workflows/sync-data.yml`, every 30 minutes) which ingests new filings and then
+re-checks Pro portfolios. The daily Vercel crons remain as a safety net. Note that GitHub
+pauses scheduled workflows on public repos after 60 days without commits.
 
 ## Matching accuracy
 
