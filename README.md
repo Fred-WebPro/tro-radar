@@ -64,6 +64,16 @@ you want them. `SITE_URL` is derived automatically on Vercel.
 Scripts: `npm run ingest` (pull/refresh cases), `npm run digest` (email new filings to
 watchers).
 
+## Chrome extension
+
+`extension/` is a Manifest V3 extension that shows the traffic-light verdict directly on
+**AliExpress, Temu, 1688, and Alibaba** product pages (badge in the bottom-right corner,
+powered by `/api/check`), plus a popup for manual checks.
+
+Install (unpacked): `chrome://extensions` → enable **Developer mode** → **Load unpacked**
+→ select the `extension/` folder. Publishing to the Chrome Web Store requires a one-time
+$5 developer registration.
+
 ## How the verdict works
 
 Search text is tokenized and matched (FTS5) against case names, plaintiffs, and
